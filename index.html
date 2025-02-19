@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fútbol en Vivo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+        body { background: #0D0D0D; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .container { display: none; width: 90%; max-width: 600px; text-align: center; padding: 20px; border-radius: 15px; background: #1A1A1A; box-shadow: 0px 0px 10px rgba(255,255,255,0.2); }
+        .video-container { position: relative; width: 100%; border-radius: 10px; overflow: hidden; }
+        video { width: 100%; height: auto; border-radius: 10px; }
+        .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
+        button { background: #1db954; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; color: white; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #17a345; transform: scale(1.05); }
+        .splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: flex; align-items: center; justify-content: center; animation: fadeOut 2s 2s forwards; }
+        .loading { font-size: 22px; font-weight: bold; color: #1db954; }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+    </style>
+</head>
+<body>
+    <div class="splash">
+        <div class="loading">Cargando la transmisión...</div>
+    </div>
+    <div class="container">
+        <h1>⚽ Partidos en Vivo</h1>
+        <div class="menu" id="match-list"></div>
+        <div class="video-container">
+            <video id="video" controls></video>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(() => document.querySelector('.container').style.display = 'block', 3000);
+            
+            const partidos = [
+                { nombre: "Real Madrid vs Barcelona", url: "URL_DEL_ENLACE_M3U8_1" },
+                { nombre: "Manchester United vs PSG", url: "URL_DEL_ENLACE_M3U8_2" }
+            ];
+            
+            const matchList = document.getElementById("match-list");
+            const video = document.getElementById("video");
+            
+            partidos.forEach(partido => {
+                let btn = document.createElement("button");
+                btn.innerText = partido.nombre;
+                btn.onclick = () => loadStream(partido.url);
+                matchList.appendChild(btn);
+            });
+            
+            function loadStream(url) {
+                if (Hls.isSupported()) {
+                    let hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = url;
+                }
+                video.play();
+            }
+        });
+    </script>
+</body>
+</html>
