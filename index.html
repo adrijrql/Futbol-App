@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Fútbol en Vivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/video.js/dist/video-js.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/video.js/dist/video.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
         body { background: #0D0D0D; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .container { display: none; width: 90%; max-width: 600px; text-align: center; padding: 20px; border-radius: 15px; background: #1A1A1A; box-shadow: 0px 0px 10px rgba(255,255,255,0.2); }
-        .video-container { position: relative; width: 100%; border-radius: 10px; overflow: hidden; }
-        video { width: 100%; height: auto; border-radius: 10px; }
-        .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
-        button { background: #1db954; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; color: white; font-size: 16px; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #17a345; transform: scale(1.05); }
+        .container { display: none; width: 90%; max-width: 800px; text-align: center; padding: 20px; border-radius: 15px; background: #1A1A1A; box-shadow: 0px 0px 10px rgba(255,255,255,0.2); }
+        .match-list { display: flex; overflow-x: auto; padding: 10px; gap: 15px; }
+        .match-card { background: #222; padding: 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: 0.3s; width: 150px; }
+        .match-card:hover { background: #333; transform: scale(1.05); }
+        .match-img { width: 100px; height: 100px; border-radius: 10px; }
+        .match-info { font-size: 14px; font-weight: bold; text-align: center; }
+        .video-container { position: relative; width: 100%; max-width: 700px; border-radius: 10px; overflow: hidden; margin-top: 20px; background: black; }
         .splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: flex; align-items: center; justify-content: center; animation: fadeOut 2s 2s forwards; }
         .loading { font-size: 22px; font-weight: bold; color: #1db954; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
@@ -26,9 +28,11 @@
     </div>
     <div class="container">
         <h1>⚽ Partidos en Vivo</h1>
-        <div class="menu" id="match-list"></div>
+        <div class="match-list" id="match-list"></div>
         <div class="video-container">
-            <video id="video" controls></video>
+            <video id="video" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="400">
+                <source src="" type="application/x-mpegURL">
+            </video>
         </div>
     </div>
     <script>
@@ -36,29 +40,28 @@
             setTimeout(() => document.querySelector('.container').style.display = 'block', 3000);
             
             const partidos = [
-                { nombre: "Real Madrid vs Barcelona", url: "URL_DEL_ENLACE_M3U8_1" },
-                { nombre: "Manchester United vs PSG", url: "URL_DEL_ENLACE_M3U8_2" }
+                { nombre: "Real Madrid vs Barcelona", url: "https://video-weaver.mia05.hls.live-video.net/v1/playlist/CqUFrjtbdq6uEHCBGRZjRUjPDIkFOFEMDYiVKemB_bjmNAhytWKtZ3OQIXLasMm_9tGYC0kThssolsK9iYnXfIQ9MNxD09SUWuXjra-Z5OgxjpXErGKJJ_DbmKt_KoGE1kRNqkPcMyecqCmBIB1qbMW_XbVkCVZ4M8SPFeeHuPuq-ncu1zCjDVIVaNdvIhT-BuE6rO-1X-QRsi27GQtML4qX63NsVBRjAuVXqgn6GeL8QCcNf-uzEpxcen78n3ysOSoHJE83Ebl2eKQJARrTHlRCDUCdzA-e_Fp0sVvYZ0ULavQ2ORh4dPv89C2vAHjRSsOvw9lxY2KJpA96-o23fwCQsGSEMQ8bto6Yw18T6diXkMg8WXBysdv7t_gKMBlqsMCwoWlsDY7X0R2HrtPoHWFwdHk81xj0N0_fQKyOBdcndv-XRiyvcud8luKMcIYmi9v7olG0Zt6DaJA2qOrObUF3OHyp-uGfzNu8tJA6ExWwJnl6RAqhr2ByA9w94fgKEXGIlg4p7xx4rr3BVHdjR6ECl2LrNMHmS1wH2QmDTyhmguyvzovOqHKN_AMJ9YGq1QA826TIqHoxa-TuD07qUTfBTCKdd6UBAVci4mQ1zyEbgdu4-GNNP-4YezzTHwtyNjFnrNV91l_ZabNL6qI1RKNYVP3XjxQq9kHjlgDtc_Y_PHAXgTDNGsVGeuwYCBfpZinzZhwQbD_QbZ046ygzCGn-9MPtLqO_y59b610nXu7IjbyBBwoNHfWfUg0MVR3FbhVA5EGGt99Wg2ZE3pwH9D0o-kXDtNleDBQNZJq7aCKGCIlOfI0jQZ5LJoDnjU3OHC93G7lelEyUrSiKOuTqYK0PjB0S0Xj_oLRo35VXRptikKxyAX8WihQrsLCl8qGxx05Icb_2zK4aDG8o2WitSOCHhOcNwyABKgl1cy1lYXN0LTIwzQs.m3u8", img: "https://via.placeholder.com/100" },
+                { nombre: "Manchester United vs PSG", url: "URL_DEL_ENLACE_M3U8_2", img: "https://via.placeholder.com/100" }
             ];
             
             const matchList = document.getElementById("match-list");
             const video = document.getElementById("video");
+            const player = videojs(video);
             
             partidos.forEach(partido => {
-                let btn = document.createElement("button");
-                btn.innerText = partido.nombre;
-                btn.onclick = () => loadStream(partido.url);
-                matchList.appendChild(btn);
+                let card = document.createElement("div");
+                card.classList.add("match-card");
+                card.innerHTML = `
+                    <img class="match-img" src="${partido.img}" alt="${partido.nombre}">
+                    <div class="match-info">${partido.nombre}</div>
+                `;
+                card.onclick = () => loadStream(partido.url);
+                matchList.appendChild(card);
             });
             
             function loadStream(url) {
-                if (Hls.isSupported()) {
-                    let hls = new Hls();
-                    hls.loadSource(url);
-                    hls.attachMedia(video);
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = url;
-                }
-                video.play();
+                player.src({ src: url, type: 'application/x-mpegURL' });
+                player.play();
             }
         });
     </script>
